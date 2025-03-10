@@ -3,51 +3,59 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
-	scanner "github.com/cedricleblond35/portScannerWails/cmd"
+	"log"
+
+	"github.com/cedricleblond35/portScannerWails/cmd"
 )
 
-// App struct
+// App struct for Wails
 type App struct {
-	ctx context.Context
+	ctx     context.Context
+	scanner *cmd.PortScanner
 }
 
-// NewApp creates a new App application struct
+// NewApp creates a new App instance
 func NewApp() *App {
 	return &App{}
 }
 
-func (a *App) startup(ctx context.Context) {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: go run portscanner.go <host> <start-port> <end-port>")
-		fmt.Println("Example: go run portscanner.go localhost 1 1024")
-	}
+// WailsInit initializes the app
+func (a *App) WailsInit(ctx context.Context) {
+	log.Print("******************* start *******************")
+	a.ctx = ctx
+}
 
-	host := os.Args[1]
-	startPort, err := strconv.Atoi(os.Args[2])
-	if err != nil {
-		fmt.Println("Error: invalid start port")
-		os.Exit(1)
-	}
-	endPort, err := strconv.Atoi(os.Args[3])
-	if err != nil {
-		fmt.Println("Error: invalid end port")
-		os.Exit(1)
-	}
-
+// StartScan initializes and starts a scan
+func (a *App) StartScan(host string, startPort, endPort int, protocol string) ([]string, error) {
+	log.Print("host:", host)
+	log.Print("startPort:", startPort)
+	log.Print("endPort:", endPort)
+	log.Print("protocol:", protocol)
 	if startPort < 1 || endPort > 65535 || startPort > endPort {
-		println("Error: port range must be between 1 and 65535, with start <= end")
-		os.Exit(1)
+		return nil, fmt.Errorf("invalid port range: must be between 1 and 65535, with start <= end")
 	}
+	a.scanner = cmd.NewPortScanner(host, startPort, endPort, protocol)
+	results := a.scanner.Scan()
+	return results, nil
+}
 
-	// Create and run the scanner
-	scanner := scanner.NewPortScanner(host, startPort, endPort)
-	fmt.Printf("Scanning %s from port %d to %d...\n", host, startPort, endPort)
-	results := scanner.Scan()
-
-	for _, result := range results {
-		fmt.Println(result)
+// GetProgress returns the current scanning progress
+func (a *App) GetProgress() float64 {
+	if a.scanner == nil {
+		return 0
 	}
-	fmt.Printf("Open ports found: %v\n", scanner.OpenPorts)
+	return a.scanner.Progress()
+}
+
+// StopScan stops the current scan
+func (a *App) StopScan() {
+	if a.scanner != nil {
+		a.scanner.Stop()
+	}
+}
+
+// LogError logs an error to a file
+func (a *App) LogError(err string) {
+	log.Printf("Error: %s", err)
+	// Ici, vous pouvez ajouter une écriture dans un fichier de log si besoin
 }

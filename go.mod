@@ -1,4 +1,4 @@
-module portScanner
+module github.com/cedricleblond35/portScannerWails
 
 go 1.23
 

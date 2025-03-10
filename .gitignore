@@ -1,3 +1,37 @@
-build/bin
-node_modules
-frontend/dist
+# Fichiers générés par Wails
+build/
+frontend/dist/
+frontend/node_modules/
+frontend/package-lock.json
+
+# Fichiers temporaires et logs
+*.log
+*.tmp
+
+# Dépendances Go locales
+vendor/
+
+# Fichiers de build Go
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Fichiers de configuration d'éditeur
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers personnels ou spécifiques au système
+.DS_Store
+Thumbs.db
+
+# Fichiers de test ou de couverture
+*.test
+*.out
+coverage/
+
+# Autres fichiers inutiles
+*.bak
+*.backup

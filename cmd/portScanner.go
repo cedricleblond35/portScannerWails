@@ -12,6 +12,7 @@ type PortScanner struct {
 	Host       string        // Target host (e.g., "localhost" or "192.168.1.1")
 	StartPort  int           // Starting port number
 	EndPort    int           // Ending port number
+	Protocol   string        // Protocol to use: "tcp" or "udp"
 	Timeout    time.Duration // Timeout for each connection attempt
 	OpenPorts  []int         // List of open ports found
 	mu         sync.Mutex    // Mutex to protect OpenPorts from concurrent access
@@ -25,11 +26,15 @@ type PortScanner struct {
 type DialerFunc func(network, address string, timeout time.Duration) (net.Conn, error)
 
 // NewPortScanner initializes a new port scanner
-func NewPortScanner(host string, start, end int) *PortScanner {
+func NewPortScanner(host string, start, end int, protocol string) *PortScanner {
+	if protocol != "tcp" && protocol != "udp" {
+		protocol = "tcp" // Default to TCP if invalid
+	}
 	return &PortScanner{
 		Host:       host,
 		StartPort:  start,
 		EndPort:    end,
+		Protocol:   protocol,
 		Timeout:    100 * time.Millisecond,
 		OpenPorts:  []int{},
 		stopChan:   make(chan struct{}),
@@ -50,7 +55,7 @@ func (ps *PortScanner) ScanPort(port int, wg *sync.WaitGroup, results chan<- str
 
 	// Construct the target address (e.g., "localhost:80")
 	address := fmt.Sprintf("%s:%d", ps.Host, port)
-	conn, err := dialer("tcp", address, ps.Timeout)
+	conn, err := dialer(ps.Protocol, address, ps.Timeout)
 	if err == nil {
 		conn.Close()
 		ps.mu.Lock()
@@ -101,4 +106,14 @@ func (ps *PortScanner) Stop() {
 		ps.running = false
 		ps.stopChan = make(chan struct{}) // Reset for future scans
 	}
+}
+
+// Progress returns the scanning progress as a percentage
+func (ps *PortScanner) Progress() float64 {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+	if ps.totalPorts == 0 {
+		return 0
+	}
+	return float64(ps.scanned) / float64(ps.totalPorts) * 100
 }
