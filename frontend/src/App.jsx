@@ -3,8 +3,10 @@ import { ProgressBar, Form, Button, ListGroup, Alert } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
+import { StartScan, GetProgress, StopScan, LogError } from '../wailsjs/go/main/App';
+
 function App() {
-  const [host, setHost] = useState('localhost');
+  const [host, setHost] = useState('172.217.16.46');
   const [startPort, setStartPort] = useState(1);
   const [endPort, setEndPort] = useState(1024);
   const [protocol, setProtocol] = useState('tcp');
@@ -21,17 +23,18 @@ function App() {
     setOpenPorts([]);
     setError('');
     try {
-      const [scanResults, err] = await window.wails.Call('StartScan', host, startPort, endPort, protocol);
+      console.log(host, startPort, endPort, protocol);
+      const [scanResults, err] = await StartScan(host, startPort, endPort, protocol);
       if (err) {
         setError(err);
-        await window.wails.Call('LogError', err);
+        await LogError(err);
       } else {
         setResults(scanResults);
         setOpenPorts(scanResults.filter(r => r.includes("OPEN")).map(r => parseInt(r.split(' ')[1])));
       }
     } catch (e) {
       setError('Unexpected error occurred');
-      await window.wails.Call('LogError', e.message);
+      await LogError(e.message);
     } finally {
       setScanning(false);
     }
@@ -41,7 +44,7 @@ function App() {
   useEffect(() => {
     if (scanning) {
       const interval = setInterval(async () => {
-        const prog = await window.wails.Call('GetProgress');
+        const prog = await GetProgress();
         setProgress(prog);
         if (prog >= 100) clearInterval(interval);
       }, 100);
@@ -51,7 +54,7 @@ function App() {
 
   // Stop the scan
   const stopScan = async () => {
-    await window.wails.Call('StopScan');
+    await StopScan();
     setScanning(false);
   };
 

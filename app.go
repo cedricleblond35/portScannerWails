@@ -21,16 +21,11 @@ func NewApp() *App {
 
 // WailsInit initializes the app
 func (a *App) WailsInit(ctx context.Context) {
-	log.Print("******************* start *******************")
 	a.ctx = ctx
 }
 
 // StartScan initializes and starts a scan
 func (a *App) StartScan(host string, startPort, endPort int, protocol string) ([]string, error) {
-	log.Print("host:", host)
-	log.Print("startPort:", startPort)
-	log.Print("endPort:", endPort)
-	log.Print("protocol:", protocol)
 	if startPort < 1 || endPort > 65535 || startPort > endPort {
 		return nil, fmt.Errorf("invalid port range: must be between 1 and 65535, with start <= end")
 	}
